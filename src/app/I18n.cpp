@@ -1,0 +1,294 @@
+#include "app/I18n.h"
+
+#include "core/Money.h"
+
+#include <QHash>
+#include <QLocale>
+
+namespace {
+
+QString g_language = "tr";
+
+struct Text {
+    const char *tr;
+    const char *en;
+};
+
+const QHash<QString, Text> &texts()
+{
+    static const QHash<QString, Text> table = {
+        // Genel
+        {"app_name", {"Araç Kiralama", "Car Rental"}},
+        {"dashboard", {"Özet", "Dashboard"}},
+        {"fleet", {"Filo", "Fleet"}},
+        {"customers", {"Müşteriler", "Customers"}},
+        {"rentals", {"Kiralamalar", "Rentals"}},
+        {"reports", {"Raporlar", "Reports"}},
+        {"theme", {"Tema", "Theme"}},
+        {"language", {"English", "Türkçe"}},
+        {"about", {"Hakkında", "About"}},
+        {"add", {"Ekle", "Add"}},
+        {"edit", {"Düzenle", "Edit"}},
+        {"delete", {"Sil", "Delete"}},
+        {"save", {"Kaydet", "Save"}},
+        {"cancel", {"Vazgeç", "Cancel"}},
+        {"close", {"Kapat", "Close"}},
+        {"search", {"Ara…", "Search…"}},
+        {"export_csv", {"CSV'ye aktar", "Export CSV"}},
+        {"all", {"Tümü", "All"}},
+        {"confirm_delete", {"Seçili kayıt silinsin mi?", "Delete the selected record?"}},
+        {"saved_csv", {"{0} satır kaydedildi.", "{0} rows saved."}},
+        {"csv_failed", {"Dosya kaydedilemedi.", "The file could not be saved."}},
+        {"select_row", {"Önce listeden bir satır seç.", "Select a row in the list first."}},
+        {"unexpected_error", {"Beklenmeyen bir hata oluştu.", "An unexpected error occurred."}},
+        {"db_open_failed", {"Veri dosyası açılamadı. Klasöre yazma izni olduğundan emin ol:\n{0}",
+                            "The data file could not be opened. Make sure this folder is writable:\n{0}"}},
+        {"version", {"Sürüm {0}", "Version {0}"}},
+        {"about_text",
+         {"Küçük bir araç kiralama ofisi için C++20 ve Qt 6 ile yazılmış yönetim uygulaması. Veriler bu bilgisayarda "
+          "SQLite veritabanında tutulur.",
+          "A management app for a small car rental office, written in C++20 and Qt 6. Data is stored on this "
+          "computer in an SQLite database."}},
+        {"data_folder", {"Veri klasörü", "Data folder"}},
+        {"view_on_github", {"GitHub'da görüntüle", "View on GitHub"}},
+
+        // Özet
+        {"vehicles_total", {"Toplam araç", "Vehicles"}},
+        {"available_now", {"Müsait", "Available"}},
+        {"rented_now", {"Kirada", "Rented"}},
+        {"in_maintenance", {"Bakımda", "In maintenance"}},
+        {"pickups_today", {"Teslim bekleyen", "Pick-ups due"}},
+        {"returns_today", {"Bugün dönecek", "Returns today"}},
+        {"overdue", {"Geciken", "Overdue"}},
+        {"service_due", {"Bakımı yaklaşan", "Service due"}},
+        {"todo", {"Yapılacaklar", "To do"}},
+        {"nothing_todo", {"Bugün için bekleyen iş yok.", "Nothing waiting for today."}},
+        {"todo_pickup", {"Teslim edilecek", "Pick up"}},
+        {"todo_return", {"Dönecek", "Return"}},
+        {"todo_overdue", {"Gecikti", "Overdue"}},
+        {"utilization", {"Doluluk", "Utilisation"}},
+
+        // Filo
+        {"plate", {"Plaka", "Plate"}},
+        {"brand", {"Marka", "Brand"}},
+        {"model", {"Model", "Model"}},
+        {"vehicle", {"Araç", "Vehicle"}},
+        {"year", {"Yıl", "Year"}},
+        {"class", {"Sınıf", "Class"}},
+        {"transmission", {"Vites", "Transmission"}},
+        {"fuel", {"Yakıt", "Fuel"}},
+        {"seats", {"Koltuk", "Seats"}},
+        {"daily_price", {"Günlük fiyat", "Daily price"}},
+        {"mileage", {"Km", "Mileage"}},
+        {"next_service", {"Sonraki bakım (km)", "Next service (km)"}},
+        {"status", {"Durum", "Status"}},
+        {"new_vehicle", {"Yeni araç", "New vehicle"}},
+        {"edit_vehicle", {"Aracı düzenle", "Edit vehicle"}},
+        {"start_maintenance", {"Bakıma al", "Start maintenance"}},
+        {"finish_maintenance", {"Bakımdan çıkar", "Finish maintenance"}},
+        {"maintenance_description", {"Yapılacak iş", "Work to do"}},
+        {"maintenance_cost", {"Maliyet", "Cost"}},
+        {"maintenance_history", {"Bakım geçmişi", "Maintenance history"}},
+        {"service_warning", {"Bakım yaklaşıyor", "Service due soon"}},
+
+        // Müşteriler
+        {"full_name", {"Ad soyad", "Full name"}},
+        {"phone", {"Telefon", "Phone"}},
+        {"email", {"E-posta (isteğe bağlı)", "E-mail (optional)"}},
+        {"national_id", {"T.C. kimlik no", "National ID"}},
+        {"license_number", {"Ehliyet no", "Licence number"}},
+        {"birth_date", {"Doğum tarihi", "Date of birth"}},
+        {"license_date", {"Ehliyet tarihi", "Licence date"}},
+        {"new_customer", {"Yeni müşteri", "New customer"}},
+        {"edit_customer", {"Müşteriyi düzenle", "Edit customer"}},
+        {"customer", {"Müşteri", "Customer"}},
+
+        // Kiralamalar
+        {"new_rental", {"Yeni kiralama", "New rental"}},
+        {"pick_up", {"Teslim et", "Pick up"}},
+        {"give_back", {"İade al", "Return"}},
+        {"cancel_rental", {"Rezervasyonu iptal et", "Cancel reservation"}},
+        {"print_contract", {"Sözleşme / fiş", "Contract / receipt"}},
+        {"confirm_cancel", {"Rezervasyon iptal edilsin mi?", "Cancel this reservation?"}},
+        {"number", {"No", "No."}},
+        {"start_date", {"Teslim", "Pick-up"}},
+        {"end_date", {"Dönüş", "Return"}},
+        {"total", {"Tutar", "Total"}},
+        {"days", {"{0} gün", "{0} days"}},
+        {"deposit", {"Depozito", "Deposit"}},
+        {"notes", {"Not", "Notes"}},
+        {"choose_vehicle", {"Bu tarihlerde boş araçlar", "Cars free on these dates"}},
+        {"no_vehicle_free", {"Bu tarihlerde boş araç yok.", "No car is free on these dates."}},
+        {"no_customers", {"Önce bir müşteri ekle.", "Add a customer first."}},
+        {"price_summary", {"{0} × {1} = {2}", "{0} × {1} = {2}"}},
+        {"discount", {"İndirim %{0}", "Discount {0}%"}},
+        {"pick_up_now", {"Hemen teslim et", "Pick up now"}},
+        {"km_out", {"Çıkış km", "Mileage out"}},
+        {"km_in", {"Dönüş km", "Mileage in"}},
+        {"fuel_level", {"Yakıt seviyesi", "Fuel level"}},
+        {"return_date", {"İade tarihi", "Return date"}},
+        {"late_fee", {"Gecikme ({0} gün)", "Late return ({0} days)"}},
+        {"extra_km_fee", {"Fazla km ({0} km)", "Extra mileage ({0} km)"}},
+        {"fuel_fee", {"Eksik yakıt ({0}/8)", "Missing fuel ({0}/8)"}},
+        {"extra_total", {"Ek ücret toplamı", "Extra charges"}},
+        {"grand_total", {"Genel toplam", "Grand total"}},
+        {"rental_fee", {"Kira bedeli", "Rental fee"}},
+        {"save_pdf", {"PDF olarak kaydet", "Save as PDF"}},
+        {"contract_title", {"ARAÇ KİRALAMA SÖZLEŞMESİ", "CAR RENTAL CONTRACT"}},
+        {"receipt_title", {"İADE FİŞİ", "RETURN RECEIPT"}},
+        {"contract_terms",
+         {"Kiracı aracı belirtilen tarihte, teslim aldığı yakıt seviyesiyle iade etmeyi kabul eder. Geciken her gün "
+          "için günlük fiyatın %150'si, günlük 300 km'yi aşan her km için 5 TL ve eksik her 1/8 depo için 250 TL "
+          "ücretlendirilir.",
+          "The renter agrees to return the car on the stated date with the same fuel level. Each late day costs 150% "
+          "of the daily price, each kilometre above 300 km per day costs 5 TL and each missing 1/8 tank costs 250 TL."}},
+        {"signature_renter", {"Kiracı imzası", "Renter's signature"}},
+        {"signature_office", {"Yetkili imzası", "Office signature"}},
+        {"pdf_saved", {"PDF kaydedildi.", "PDF saved."}},
+
+        // Raporlar
+        {"monthly_revenue", {"Aylık gelir", "Monthly revenue"}},
+        {"top_vehicles", {"En çok kiralanan araçlar", "Most rented cars"}},
+        {"rental_count", {"Kiralama", "Rentals"}},
+        {"revenue", {"Gelir", "Revenue"}},
+        {"year_total", {"Yıl toplamı: {0}", "Year total: {0}"}},
+        {"no_data", {"Henüz tamamlanmış kiralama yok.", "No completed rentals yet."}},
+
+        // Hatalar (Result ve Rules anahtarları)
+        {"err_invalid_plate", {"Plaka geçersiz (ör. 34 ABC 123).", "Invalid plate (e.g. 34 ABC 123)."}},
+        {"err_missing_brand_model", {"Marka ve model gerekli.", "Brand and model are required."}},
+        {"err_invalid_year", {"Model yılı geçersiz.", "Invalid model year."}},
+        {"err_invalid_seats", {"Koltuk sayısı 2 ile 9 arasında olmalı.", "Seats must be between 2 and 9."}},
+        {"err_invalid_price", {"Günlük fiyat geçersiz.", "Invalid daily price."}},
+        {"err_invalid_mileage", {"Km geçersiz.", "Invalid mileage."}},
+        {"err_invalid_service_km", {"Sonraki bakım km'si mevcut km'den büyük olmalı.",
+                                    "Next service mileage must be above the current mileage."}},
+        {"err_duplicate_plate", {"Bu plaka zaten kayıtlı.", "This plate is already registered."}},
+        {"err_invalid_name", {"Ad soyad gerekli.", "Full name is required."}},
+        {"err_invalid_phone", {"Telefon numarası geçersiz.", "Invalid phone number."}},
+        {"err_invalid_email", {"E-posta adresi geçersiz.", "Invalid e-mail address."}},
+        {"err_invalid_national_id", {"T.C. kimlik numarası geçersiz.", "Invalid national ID number."}},
+        {"err_invalid_license_number", {"Ehliyet numarası gerekli.", "Licence number is required."}},
+        {"err_invalid_birth_date", {"Doğum tarihi geçersiz.", "Invalid date of birth."}},
+        {"err_too_young", {"Müşteri en az 21 yaşında olmalı.", "The customer must be at least 21."}},
+        {"err_invalid_license_date", {"Ehliyet tarihi geçersiz.", "Invalid licence date."}},
+        {"err_license_too_new", {"Ehliyet en az 2 yıllık olmalı.", "The licence must be at least 2 years old."}},
+        {"err_duplicate_national_id", {"Bu T.C. kimlik numarası zaten kayıtlı.", "This national ID is already registered."}},
+        {"err_invalid_dates", {"Dönüş tarihi teslimden sonra olmalı.", "The return date must be after pick-up."}},
+        {"err_start_in_past", {"Teslim tarihi geçmişte olamaz.", "The pick-up date cannot be in the past."}},
+        {"err_too_long", {"Kiralama en fazla 365 gün olabilir.", "A rental can last at most 365 days."}},
+        {"err_invalid_deposit", {"Depozito geçersiz.", "Invalid deposit."}},
+        {"err_notes_too_long", {"Not çok uzun.", "The note is too long."}},
+        {"err_vehicle_in_maintenance", {"Araç bakımda.", "The car is in maintenance."}},
+        {"err_vehicle_not_available", {"Araç bu tarihlerde müsait değil.", "The car is not available on these dates."}},
+        {"err_invalid_state", {"Bu işlem kaydın şu anki durumunda yapılamaz.", "This cannot be done in the record's current state."}},
+        {"err_not_started_yet", {"Teslim günü henüz gelmedi.", "The pick-up date has not come yet."}},
+        {"err_km_below_odometer", {"Km, aracın göstergesindeki değerden düşük olamaz.", "Mileage cannot be below the odometer."}},
+        {"err_invalid_km", {"Dönüş km'si geçersiz.", "Invalid return mileage."}},
+        {"err_invalid_fuel", {"Yakıt seviyesi geçersiz.", "Invalid fuel level."}},
+        {"err_invalid_description", {"Yapılacak işi yaz (en fazla 300 karakter).", "Describe the work (300 characters max)."}},
+        {"err_invalid_cost", {"Maliyet geçersiz.", "Invalid cost."}},
+        {"err_has_history", {"Geçmişi olan kayıt silinemez.", "A record with history cannot be deleted."}},
+        {"err_not_found", {"Kayıt bulunamadı.", "Record not found."}},
+        {"err_save_failed", {"Kaydedilemedi.", "Could not be saved."}},
+    };
+    return table;
+}
+
+QString lookup(const QString &key)
+{
+    const auto it = texts().constFind(key);
+    if (it == texts().constEnd())
+        return key; // eksik metin ekranda anahtarıyla görünür; çökme olmaz
+    return QString::fromUtf8(g_language == "en" ? it->en : it->tr);
+}
+
+} // namespace
+
+namespace I18n {
+
+void setLanguage(const QString &language)
+{
+    g_language = language == "en" ? "en" : "tr";
+}
+
+QString language()
+{
+    return g_language;
+}
+
+QString t(const char *key)
+{
+    return lookup(QString::fromLatin1(key));
+}
+
+QString error(const QString &key)
+{
+    const QString text = lookup("err_" + key);
+    return text.startsWith("err_") ? lookup("unexpected_error") : text;
+}
+
+QString vehicleClass(VehicleClass value)
+{
+    static const Text names[] = {{"Ekonomi", "Economy"}, {"Kompakt", "Compact"}, {"Orta", "Midsize"},
+                                 {"SUV", "SUV"},         {"Minivan", "Van"},     {"Lüks", "Luxury"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString transmission(Transmission value)
+{
+    if (value == Transmission::Automatic)
+        return g_language == "en" ? "Automatic" : "Otomatik";
+    return g_language == "en" ? "Manual" : "Manuel";
+}
+
+QString fuel(Fuel value)
+{
+    static const Text names[] = {{"Benzin", "Petrol"}, {"Dizel", "Diesel"}, {"Hibrit", "Hybrid"},
+                                 {"Elektrik", "Electric"}, {"LPG", "LPG"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString vehicleStatus(VehicleStatus value)
+{
+    static const Text names[] = {{"Müsait", "Available"}, {"Kirada", "Rented"}, {"Bakımda", "Maintenance"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString rentalStatus(RentalStatus value)
+{
+    static const Text names[] = {{"Rezervasyon", "Reserved"}, {"Aktif", "Active"}, {"İade edildi", "Returned"},
+                                 {"İptal", "Cancelled"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString date(const QDate &value)
+{
+    if (!value.isValid())
+        return "—";
+    return value.toString(g_language == "en" ? "MMM d, yyyy" : "dd.MM.yyyy");
+}
+
+QString money(qint64 kurus)
+{
+    return Money::format(kurus, g_language);
+}
+
+QString number(int value)
+{
+    return QLocale(g_language == "en" ? QLocale::English : QLocale::Turkish).toString(value);
+}
+
+QString phone(const QString &digits)
+{
+    // Kayıtta numara sadece rakam olarak tutulur; ekranda okunması kolay biçimde gösterilir
+    if (digits.size() != 10)
+        return digits;
+    return QString("0%1 %2 %3 %4").arg(digits.left(3), digits.mid(3, 3), digits.mid(6, 2), digits.mid(8, 2));
+}
+
+} // namespace I18n
