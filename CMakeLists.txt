@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Sql Widgets PrintSupport Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Sql Widgets Test)
 qt_standard_project_setup()
 
 # İş kuralları ve veri katmanı: arayüzden bağımsız, testler de bunu kullanır
@@ -50,7 +50,7 @@ qt_add_executable(CarRental WIN32
     ${CMAKE_BINARY_DIR}/app.rc
 )
 qt_add_resources(CarRental "app_resources" PREFIX "/" BASE resources FILES resources/icon.png)
-target_link_libraries(CarRental PRIVATE car_core Qt6::Widgets Qt6::PrintSupport)
+target_link_libraries(CarRental PRIVATE car_core Qt6::Widgets)
 target_compile_definitions(CarRental PRIVATE APP_VERSION="${PROJECT_VERSION}")
 
 enable_testing()
@@ -60,3 +60,6 @@ add_test(NAME test_core COMMAND test_core)
 qt_add_executable(test_data tests/test_data.cpp)
 target_link_libraries(test_data PRIVATE car_core Qt6::Test)
 add_test(NAME test_data COMMAND test_data)
+qt_add_executable(test_services tests/test_services.cpp src/services/ContractPrinter.cpp)
+target_link_libraries(test_services PRIVATE car_core Qt6::Gui Qt6::Test)
+add_test(NAME test_services COMMAND test_services)
