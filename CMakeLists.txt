@@ -21,6 +21,7 @@ qt_add_library(car_core STATIC
     src/data/MaintenanceRepository.cpp
     src/data/ReportRepository.cpp
     src/services/CsvExport.cpp
+    src/services/DemoData.cpp
     src/app/I18n.cpp
     src/app/Settings.cpp
 )
