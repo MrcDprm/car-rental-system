@@ -233,12 +233,16 @@ const Rental *DashboardPage::selectedRental() const
 
 void DashboardPage::updateButtons()
 {
-    // Sadece listedeki kayıt türüne uyan düğmeler görünür; seçili kaydın durumuna göre açılır
+    // Sadece bu listeye uyan düğmeler görünür (ör. "Kirada" listesinde "Teslim et" yoktur);
+    // görünenler de seçili kaydın durumuna göre açılır
     const bool vehicles = showsVehicles();
-    for (QPushButton *button : {m_rent, m_edit, m_maintenance})
-        button->setVisible(vehicles);
-    for (QPushButton *button : {m_pickUp, m_giveBack, m_print})
-        button->setVisible(!vehicles);
+    const bool todo = m_view == View::Todo;
+    m_rent->setVisible(vehicles && m_view != View::Maintenance);
+    m_edit->setVisible(vehicles);
+    m_maintenance->setVisible(vehicles);
+    m_pickUp->setVisible(todo || m_view == View::PickUps);
+    m_giveBack->setVisible(todo || m_view == View::Rented || m_view == View::ReturnsToday || m_view == View::Overdue);
+    m_print->setVisible(!vehicles);
 
     const Vehicle *v = selectedVehicle();
     m_rent->setEnabled(v && v->status == VehicleStatus::Available);

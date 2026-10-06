@@ -57,6 +57,7 @@ void apply(QApplication &app, bool dark)
         QPushButton:hover { background: %3; }
         QPushButton:disabled { color: %5; }
         QPushButton[accent="true"] { background: %1; color: %6; border: none; font-weight: 600; }
+        QPushButton[accent="true"]:disabled { background: %2; color: %5; border: 1px solid %4; font-weight: normal; }
         QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QPlainTextEdit {
             background: %7; border: 1px solid %4; border-radius: 4px; padding: 4px 6px; }
         QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QDateEdit:focus,
