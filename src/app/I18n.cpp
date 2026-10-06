@@ -33,6 +33,9 @@ const QHash<QString, Text> &texts()
         {"save", {"Kaydet", "Save"}},
         {"cancel", {"Vazgeç", "Cancel"}},
         {"close", {"Kapat", "Close"}},
+        {"yes", {"Evet", "Yes"}},
+        {"no", {"Hayır", "No"}},
+        {"ok", {"Tamam", "OK"}},
         {"search", {"Ara…", "Search…"}},
         {"export_csv", {"CSV'ye aktar", "Export CSV"}},
         {"all", {"Tümü", "All"}},
@@ -66,6 +69,8 @@ const QHash<QString, Text> &texts()
         {"todo_pickup", {"Teslim edilecek", "Pick up"}},
         {"todo_return", {"Dönecek", "Return"}},
         {"todo_overdue", {"Gecikti", "Overdue"}},
+        {"nothing_here", {"Bu listede kayıt yok.", "Nothing in this list."}},
+        {"rent_this", {"Kirala", "Rent"}},
         {"utilization", {"Doluluk", "Utilisation"}},
 
         // Filo
@@ -116,6 +121,7 @@ const QHash<QString, Text> &texts()
         {"email", {"E-posta (isteğe bağlı)", "E-mail (optional)"}},
         {"national_id", {"T.C. kimlik no", "National ID"}},
         {"license_number", {"Ehliyet no", "Licence number"}},
+        {"license_hint", {"Ehliyetin 5. alanındaki numara", "Number in field 5 of the licence"}},
         {"birth_date", {"Doğum tarihi", "Date of birth"}},
         {"license_date", {"Ehliyet tarihi", "Licence date"}},
         {"new_customer", {"Yeni müşteri", "New customer"}},
@@ -138,7 +144,7 @@ const QHash<QString, Text> &texts()
         {"notes", {"Not", "Notes"}},
         {"choose_vehicle", {"Bu tarihlerde boş araçlar", "Cars free on these dates"}},
         {"no_vehicle_free", {"Bu tarihlerde boş araç yok.", "No car is free on these dates."}},
-        {"no_customers", {"Önce bir müşteri ekle.", "Add a customer first."}},
+        {"no_customers", {"Kayıtlı müşteri yok. \"+ Yeni müşteri\" ile ekle.", "No customers yet. Add one with \"+ New customer\"."}},
         {"price_summary", {"{0} × {1} = {2}", "{0} × {1} = {2}"}},
         {"discount", {"İndirim %{0}", "Discount {0}%"}},
         {"pick_up_now", {"Hemen teslim et", "Pick up now"}},
@@ -243,6 +249,9 @@ namespace I18n {
 void setLanguage(const QString &language)
 {
     g_language = language == "en" ? "en" : "tr";
+    // Takvim, sayı kutuları ve tarih seçicileri de seçili dilin biçimini kullansın (1.250,00 / 1,250.00)
+    QLocale::setDefault(QLocale(g_language == "en" ? QLocale::English : QLocale::Turkish,
+                                g_language == "en" ? QLocale::UnitedStates : QLocale::Turkey));
 }
 
 QString language()
