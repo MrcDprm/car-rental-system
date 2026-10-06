@@ -46,6 +46,7 @@ qt_add_executable(CarRental WIN32
     src/ui/CustomerDialog.cpp
     src/ui/RentalsPage.cpp
     src/ui/RentalDialog.cpp
+    src/ui/RentalActions.cpp
     src/ui/ReturnDialog.cpp
     src/ui/MaintenanceDialog.cpp
     src/ui/ReportsPage.cpp

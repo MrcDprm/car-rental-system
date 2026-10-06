@@ -4,65 +4,25 @@
 #include "data/CustomerRepository.h"
 #include "data/RentalRepository.h"
 #include "data/VehicleRepository.h"
-#include "services/ContractPrinter.h"
 #include "services/CsvExport.h"
+#include "ui/RentalActions.h"
 #include "ui/RentalDialog.h"
-#include "ui/ReturnDialog.h"
 #include "ui/UiHelpers.h"
 
 #include <QComboBox>
-#include <QDesktopServices>
-#include <QDialogButtonBox>
 #include <QFileDialog>
-#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSpinBox>
 #include <QStandardPaths>
-#include <QUrl>
 #include <QVBoxLayout>
 
 namespace {
-
-QString number(qint64 id)
-{
-    return QString("%1").arg(id, 5, 10, QChar('0')); // 12 → 00012
-}
 
 QStringList headers()
 {
     return {I18n::t("number"), I18n::t("customer"), I18n::t("plate"), I18n::t("vehicle"), I18n::t("start_date"),
             I18n::t("end_date"), I18n::t("total"), I18n::t("status")};
-}
-
-// Teslim anında aracın gerçek km'si ve yakıtı yazılır; km göstergedeki değerden düşük olamaz
-bool askPickUp(const Vehicle &vehicle, int &km, int &fuel, QWidget *parent)
-{
-    QDialog dialog(parent);
-    dialog.setWindowTitle(I18n::t("pick_up") + " · " + vehicle.plate);
-    auto *form = new QFormLayout(&dialog);
-    auto *kmBox = new QSpinBox(&dialog);
-    kmBox->setRange(vehicle.mileage, vehicle.mileage + 100'000);
-    kmBox->setSuffix(" km");
-    kmBox->setGroupSeparatorShown(true);
-    kmBox->setValue(vehicle.mileage);
-    auto *fuelBox = new QComboBox(&dialog);
-    for (int level = FUEL_FULL; level >= 0; --level)
-        fuelBox->addItem(QString("%1/%2").arg(level).arg(FUEL_FULL), level);
-    form->addRow(I18n::t("km_out"), kmBox);
-    form->addRow(I18n::t("fuel_level"), fuelBox);
-    auto *buttons = new QDialogButtonBox(&dialog);
-    buttons->addButton(Ui::accentButton(I18n::t("pick_up"), &dialog), QDialogButtonBox::AcceptRole);
-    buttons->addButton(I18n::t("cancel"), QDialogButtonBox::RejectRole);
-    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    form->addRow(buttons);
-    if (dialog.exec() != QDialog::Accepted)
-        return false;
-    km = kmBox->value();
-    fuel = fuelBox->currentData().toInt();
-    return true;
 }
 
 } // namespace
@@ -113,7 +73,7 @@ RentalsPage::RentalsPage(Database &db, QWidget *parent)
 QStringList RentalsPage::cells(const Rental &r) const
 {
     const Vehicle vehicle = m_vehicles.value(r.vehicleId);
-    return {number(r.id), m_customers.value(r.customerId).fullName, vehicle.plate,
+    return {RentalActions::number(r.id), m_customers.value(r.customerId).fullName, vehicle.plate,
             vehicle.brand + " " + vehicle.model, I18n::date(r.startDate),
             I18n::date(r.returnDate.isValid() ? r.returnDate : r.endDate), I18n::money(r.total + r.extraFees),
             I18n::rentalStatus(r.status)};
@@ -182,27 +142,21 @@ void RentalsPage::newRental()
 void RentalsPage::pickUp()
 {
     const Rental *rental = selected();
-    if (!rental || !m_vehicles.contains(rental->vehicleId))
-        return;
-    int km = 0;
-    int fuel = FUEL_FULL;
-    if (!askPickUp(m_vehicles.value(rental->vehicleId), km, fuel, this))
-        return;
-    if (Ui::showResult(this, RentalRepository(m_db).pickUp(rental->id, km, fuel)))
+    if (rental && RentalActions::pickUp(m_db, *rental, this))
         refresh();
 }
 
 void RentalsPage::giveBack()
 {
     const Rental *rental = selected();
-    if (rental && ReturnDialog(m_db, *rental, this).exec() == QDialog::Accepted)
+    if (rental && RentalActions::giveBack(m_db, *rental, this))
         refresh();
 }
 
 void RentalsPage::cancelRental()
 {
     const Rental *rental = selected();
-    if (!rental || QMessageBox::question(this, I18n::t("app_name"), I18n::t("confirm_cancel")) != QMessageBox::Yes)
+    if (!rental || !Ui::ask(this, I18n::t("confirm_cancel")))
         return;
     if (Ui::showResult(this, RentalRepository(m_db).cancel(rental->id)))
         refresh();
@@ -210,22 +164,8 @@ void RentalsPage::cancelRental()
 
 void RentalsPage::printContract()
 {
-    const Rental *rental = selected();
-    if (!rental || !m_vehicles.contains(rental->vehicleId) || !m_customers.contains(rental->customerId))
-        return;
-    const QString folder = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    const QString name = (rental->status == RentalStatus::Returned ? "receipt-" : "contract-") + number(rental->id);
-    const QString path = QFileDialog::getSaveFileName(this, I18n::t("save_pdf"), folder + "/" + name + ".pdf",
-                                                      "PDF (*.pdf)");
-    if (path.isEmpty())
-        return;
-    const QString html =
-        ContractPrinter::html(*rental, m_vehicles.value(rental->vehicleId), m_customers.value(rental->customerId));
-    if (!ContractPrinter::savePdf(html, path)) {
-        QMessageBox::warning(this, I18n::t("app_name"), I18n::error("save_failed"));
-        return;
-    }
-    QDesktopServices::openUrl(QUrl::fromLocalFile(path)); // kaydedilen PDF varsayılan görüntüleyicide açılır
+    if (const Rental *rental = selected())
+        RentalActions::printContract(m_db, *rental, this);
 }
 
 void RentalsPage::exportCsv()
@@ -239,7 +179,7 @@ void RentalsPage::exportCsv()
     for (const Rental &r : m_rentals)
         rows << cells(r);
     if (CsvExport::write(path, headers(), rows, CsvExport::separatorFor(I18n::language())))
-        QMessageBox::information(this, I18n::t("app_name"), I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
+        Ui::inform(this, I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
     else
-        QMessageBox::warning(this, I18n::t("app_name"), I18n::t("csv_failed"));
+        Ui::warn(this, I18n::t("csv_failed"));
 }
