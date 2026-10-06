@@ -1,9 +1,11 @@
 #include "data/CustomerRepository.h"
+#include "core/Rules.h"
 #include "data/Database.h"
 #include "data/MaintenanceRepository.h"
 #include "data/RentalRepository.h"
 #include "data/ReportRepository.h"
 #include "data/VehicleRepository.h"
+#include "services/DemoData.h"
 
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -187,6 +189,90 @@ private slots:
         const Vehicle v = *VehicleRepository(*m_db).find(car);
         QCOMPARE(v.status, VehicleStatus::Available);
         QCOMPARE(v.fuel, Fuel::Petrol);
+
+        query.exec(QString("UPDATE vehicles SET body_type = 42, color = -1, features = 4096 + 3 WHERE id = %1").arg(car));
+        const Vehicle broken = *VehicleRepository(*m_db).find(car);
+        QCOMPARE(broken.bodyType, BodyType::Hatchback);
+        QCOMPARE(broken.color, CarColor::White);
+        QCOMPARE(broken.features, 3); // bilinmeyen bit atıldı
+    }
+
+    void vehicleDetailsAreStored()
+    {
+        VehicleRepository repo(*m_db);
+        Vehicle v = vehicle("34 SUV 77");
+        v.bodyType = BodyType::Suv;
+        v.color = CarColor::Blue;
+        v.luggage = 4;
+        v.features = Feature::Navigation | Feature::FourWheelDrive;
+        v.photo = "0123456789abcdef0123456789abcdef.jpg";
+        const Result added = repo.add(v, m_today);
+        QVERIFY(added.ok());
+        const Vehicle stored = *repo.find(added.id);
+        QCOMPARE(stored.bodyType, BodyType::Suv);
+        QCOMPARE(stored.color, CarColor::Blue);
+        QCOMPARE(stored.luggage, 4);
+        QCOMPARE(stored.features, Feature::Navigation | Feature::FourWheelDrive);
+        QCOMPARE(stored.photo, v.photo);
+
+        v.plate = "34 SUV 78";
+        v.luggage = 12;
+        QCOMPARE(repo.add(v, m_today).error, QString("invalid_luggage"));
+        v.luggage = 2;
+        v.features = 1 << 12;
+        QCOMPARE(repo.add(v, m_today).error, QString("invalid_features"));
+        v.features = 0;
+        // Fotoğraf adı yol içeremez: klasör dışındaki bir dosya gösterilemez ya da silinemez
+        for (const QString &name : {"../../secret.jpg", "C:/Windows/x.jpg", "abc.jpg", "0123456789ABCDEF0123456789ABCDEF.jpg"}) {
+            v.photo = name;
+            QCOMPARE(repo.add(v, m_today).error, QString("invalid_photo"));
+        }
+    }
+
+    void demoDataIsConsistent()
+    {
+        QVERIFY(DemoData::isEmpty(*m_db));
+        QVERIFY(DemoData::load(*m_db, m_today));
+        QVERIFY(!DemoData::isEmpty(*m_db));
+        QVERIFY(!DemoData::load(*m_db, m_today)); // dolu veritabanına ikinci kez yüklenmez
+
+        const QList<Vehicle> vehicles = VehicleRepository(*m_db).all();
+        QVERIFY(vehicles.size() >= 100);
+        QCOMPARE(CustomerRepository(*m_db).all().size(), 25);
+        qint64 cheapest = vehicles.first().dailyPrice, priciest = cheapest;
+        for (const Vehicle &v : vehicles) {
+            QVERIFY2(Rules::vehicleProblems(v, m_today).isEmpty(), qPrintable(v.plate));
+            cheapest = std::min(cheapest, v.dailyPrice);
+            priciest = std::max(priciest, v.dailyPrice);
+        }
+        QVERIFY(cheapest <= 1000'00 && priciest >= 10000'00); // her bütçeye araç var
+
+        // Her aracın durumu kiralamalarıyla tutarlı; açık kiralamalar ve geçmiş birbiriyle çakışmaz
+        const QList<Rental> rentals = RentalRepository(*m_db).all();
+        QVERIFY(rentals.size() > 1000);
+        for (const Vehicle &v : vehicles) {
+            QList<Rental> own;
+            int active = 0;
+            for (const Rental &r : rentals)
+                if (r.vehicleId == v.id && r.status != RentalStatus::Cancelled) {
+                    own << r;
+                    active += r.status == RentalStatus::Active;
+                }
+            QCOMPARE(active, v.status == VehicleStatus::Rented ? 1 : 0);
+            for (int a = 0; a < own.size(); ++a)
+                for (int b = a + 1; b < own.size(); ++b) {
+                    const QDate aEnd = own[a].returnDate.isValid() ? own[a].returnDate : own[a].endDate;
+                    const QDate bEnd = own[b].returnDate.isValid() ? own[b].returnDate : own[b].endDate;
+                    QVERIFY2(!Rules::overlaps(own[a].startDate, aEnd, own[b].startDate, bEnd), qPrintable(v.plate));
+                }
+        }
+        const Summary s = ReportRepository(*m_db).summary(m_today);
+        QVERIFY(s.rented > 0 && s.available > 0 && s.inMaintenance > 0 && s.overdue > 0 && s.pickUpsToday > 0
+                && s.serviceDue > 0);
+        int monthsWithRevenue = 0;
+        for (qint64 revenue : ReportRepository(*m_db).monthlyRevenue(m_today.year()))
+            monthsWithRevenue += revenue > 0;
+        QVERIFY(monthsWithRevenue >= 9); // ekim ayına kadar her ayın geliri var
     }
 };
 
