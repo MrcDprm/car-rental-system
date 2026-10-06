@@ -35,6 +35,7 @@ ReturnDialog::ReturnDialog(Database &db, const Rental &rental, QWidget *parent)
     m_date->setCalendarPopup(true);
     m_date->setDisplayFormat("dd.MM.yyyy");
     m_date->setMinimumDate(rental.startDate);
+    m_date->setMaximumDate(QDate::currentDate()); // iade ileri bir tarihe yazılamaz
     m_km = new QSpinBox(this);
     m_km->setRange(rental.startKm, rental.startKm + 100'000);
     m_km->setSuffix(" km");
