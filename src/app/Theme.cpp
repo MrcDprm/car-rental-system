@@ -67,7 +67,9 @@ void apply(QApplication &app, bool dark)
         QListWidget#navigation { background: transparent; border: none; font-size: 11pt; }
         QListWidget#navigation::item { padding: 9px 12px; border-radius: 4px; }
         QListWidget#navigation::item:selected { background: %2; color: %1; }
-        QFrame#card { background: %2; border: 1px solid %4; border-radius: 6px; }
+        QFrame#card, QPushButton#card { background: %2; border: 1px solid %4; border-radius: 6px; text-align: left; }
+        QPushButton#card:hover { border: 1px solid %5; }
+        QPushButton#card:checked { border: 2px solid %1; }
         QLabel#title { font-size: 18pt; font-weight: 600; }
         QLabel#cardValue { font-size: 20pt; font-weight: 600; }
         QLabel#muted, QLabel#cardLabel { color: %5; }
