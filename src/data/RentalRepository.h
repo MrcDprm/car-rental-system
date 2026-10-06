@@ -24,7 +24,7 @@ public:
 
 private:
     static Rental fromQuery(const QSqlQuery &query);
-    bool hasOverlap(qint64 vehicleId, const QDate &start, const QDate &end) const;
+    bool hasOverlap(qint64 vehicleId, const QDate &start, const QDate &end, const QDate &today) const;
 
     Database &m_db;
 };

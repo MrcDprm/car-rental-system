@@ -77,16 +77,19 @@ std::optional<Rental> RentalRepository::find(qint64 id) const
     return std::nullopt;
 }
 
-bool RentalRepository::hasOverlap(qint64 vehicleId, const QDate &start, const QDate &end) const
+bool RentalRepository::hasOverlap(qint64 vehicleId, const QDate &start, const QDate &end, const QDate &today) const
 {
+    // Aktif kiralamanın dönüş günü geçmişse araç dönene kadar en az bugün boyunca dolu sayılır
     QSqlQuery query(m_db.connection());
-    query.prepare("SELECT COUNT(*) FROM rentals WHERE vehicle_id = ? AND status IN (?, ?) "
-                  "AND start_date < ? AND ? < end_date");
+    query.prepare("SELECT COUNT(*) FROM rentals WHERE vehicle_id = ? AND status IN (?, ?) AND start_date < ? "
+                  "AND ? < CASE WHEN status = ? THEN MAX(end_date, ?) ELSE end_date END");
     query.addBindValue(vehicleId);
     query.addBindValue(static_cast<int>(RentalStatus::Reserved));
     query.addBindValue(static_cast<int>(RentalStatus::Active));
     query.addBindValue(iso(end));
     query.addBindValue(iso(start));
+    query.addBindValue(static_cast<int>(RentalStatus::Active));
+    query.addBindValue(iso(today.addDays(1)));
     return !query.exec() || !query.next() || query.value(0).toInt() > 0; // hata da "çakışma" sayılır
 }
 
@@ -115,7 +118,7 @@ Result RentalRepository::reserve(Rental rental, const QDate &today)
 
     Transaction transaction(m_db.connection());
     // Çakışma kontrolü ve kayıt aynı işlemde: arada başka bir rezervasyon araya giremez
-    if (hasOverlap(rental.vehicleId, rental.startDate, rental.endDate))
+    if (hasOverlap(rental.vehicleId, rental.startDate, rental.endDate, today))
         return Result::failure("vehicle_not_available");
 
     const Pricing::Quote quote = Pricing::quote(vehicle->dailyPrice, rental.startDate, rental.endDate);

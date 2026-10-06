@@ -84,19 +84,23 @@ std::optional<Vehicle> VehicleRepository::find(qint64 id) const
     return std::nullopt;
 }
 
-QList<Vehicle> VehicleRepository::availableBetween(const QDate &start, const QDate &end) const
+QList<Vehicle> VehicleRepository::availableBetween(const QDate &start, const QDate &end, const QDate &today) const
 {
-    // Bakımda olmayan ve bu aralıkla çakışan rezervasyonu ya da kiralaması bulunmayan araçlar
+    // Bakımda olmayan ve bu aralıkla çakışan rezervasyonu ya da kiralaması bulunmayan araçlar.
+    // Dönüş günü geçtiği hâlde dönmemiş araç en az bugün boyunca dolu sayılır (MAX ile bitiş ertesi güne uzar).
     QList<Vehicle> vehicles;
     QSqlQuery query(m_db.connection());
     query.prepare("SELECT " + COLUMNS + " FROM vehicles v WHERE status != ? AND NOT EXISTS ("
-                  "SELECT 1 FROM rentals r WHERE r.vehicle_id = v.id AND r.status IN (?, ?) "
-                  "AND r.start_date < ? AND ? < r.end_date) ORDER BY daily_price, plate");
+                  "SELECT 1 FROM rentals r WHERE r.vehicle_id = v.id AND r.status IN (?, ?) AND r.start_date < ? "
+                  "AND ? < CASE WHEN r.status = ? THEN MAX(r.end_date, ?) ELSE r.end_date END) "
+                  "ORDER BY daily_price, plate");
     query.addBindValue(static_cast<int>(VehicleStatus::Maintenance));
     query.addBindValue(static_cast<int>(RentalStatus::Reserved));
     query.addBindValue(static_cast<int>(RentalStatus::Active));
     query.addBindValue(end.toString(Qt::ISODate));
     query.addBindValue(start.toString(Qt::ISODate));
+    query.addBindValue(static_cast<int>(RentalStatus::Active));
+    query.addBindValue(today.addDays(1).toString(Qt::ISODate));
     if (query.exec())
         while (query.next())
             vehicles << fromQuery(query);

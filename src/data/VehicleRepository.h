@@ -16,7 +16,8 @@ public:
 
     QList<Vehicle> all() const;
     std::optional<Vehicle> find(qint64 id) const;
-    QList<Vehicle> availableBetween(const QDate &start, const QDate &end) const;
+    QList<Vehicle> availableBetween(const QDate &start, const QDate &end,
+                                    const QDate &today = QDate::currentDate()) const;
     Result add(Vehicle vehicle, const QDate &today = QDate::currentDate());
     Result update(Vehicle vehicle, const QDate &today = QDate::currentDate());
     Result remove(qint64 id);

@@ -159,6 +159,28 @@ private slots:
         QCOMPARE(VehicleRepository(*m_db).remove(car).error, QString("has_history"));
     }
 
+    void overdueRentalKeepsCarBlocked()
+    {
+        // Dönüş günü geçmiş ama araç dönmemiş: bugünden başlayan yeni kiralamaya açık görünmemeli
+        const qint64 car = addVehicle();
+        const qint64 person = addCustomer();
+        Rental r;
+        r.vehicleId = car;
+        r.customerId = person;
+        r.startDate = m_today.addDays(-5);
+        r.endDate = m_today.addDays(-2);
+        RentalRepository rentals(*m_db);
+        const Result reserved = rentals.reserve(r, r.startDate);
+        QVERIFY(reserved.ok());
+        QVERIFY(rentals.pickUp(reserved.id, 10000, FUEL_FULL, r.startDate).ok());
+
+        VehicleRepository vehicles(*m_db);
+        QCOMPARE(vehicles.availableBetween(m_today, m_today.addDays(2), m_today).size(), 0);
+        QCOMPARE(reserve(car, person, 0, 2).error, QString("vehicle_not_available"));
+        // Planlanan dönüşten sonraki ileri bir tarih ise kiralanabilir (araç o zamana kadar döner varsayılır)
+        QCOMPARE(vehicles.availableBetween(m_today.addDays(5), m_today.addDays(7), m_today).size(), 1);
+    }
+
     void futureReservationCannotBePickedUpEarly()
     {
         const qint64 id = reserve(addVehicle(), addCustomer(), 2, 4).id;
