@@ -140,6 +140,7 @@ const QHash<QString, Text> &texts()
         {"end_date", {"Dönüş", "Return"}},
         {"total", {"Tutar", "Total"}},
         {"days", {"{0} gün", "{0} days"}},
+        {"day_one", {"{0} gün", "{0} day"}},
         {"deposit", {"Depozito", "Deposit"}},
         {"notes", {"Not", "Notes"}},
         {"choose_vehicle", {"Bu tarihlerde boş araçlar", "Cars free on these dates"}},
@@ -389,6 +390,12 @@ QString date(const QDate &value)
 QString money(qint64 kurus)
 {
     return Money::format(kurus, g_language);
+}
+
+QString days(int count)
+{
+    // İngilizcede tekil/çoğul ayrımı var (1 day, 2 days); Türkçede yok
+    return t(count == 1 ? "day_one" : "days").replace("{0}", QString::number(count));
 }
 
 QString number(int value)

@@ -115,7 +115,7 @@ QString html(const Rental &rental, const Vehicle &vehicle, const Customer &custo
     const QString freeKm = I18n::number(quote.days * Pricing::KM_PER_DAY) + " km";
     const QString pickUp = row(I18n::t("start_date"), I18n::date(rental.startDate))
                            + row(I18n::t("end_date"), I18n::date(rental.endDate))
-                           + row(I18n::t("rental_period"), I18n::t("days").replace("{0}", QString::number(quote.days)))
+                           + row(I18n::t("rental_period"), I18n::days(quote.days))
                            + row(I18n::t("km_out"), I18n::number(rental.startKm) + " km")
                            + htmlRow(I18n::t("fuel_level"), fuel(rental.fuelOut));
     const QString second = returned ? row(I18n::t("return_date"), I18n::date(rental.returnDate))
@@ -129,7 +129,7 @@ QString html(const Rental &rental, const Vehicle &vehicle, const Customer &custo
     page += columns(box(I18n::t("rental_details"), pickUp), box(I18n::t(returned ? "return_info" : "allowances"), second));
 
     // Ücretler: iade fişinde ek ücretler kalem kalem (kayıttaki km ve yakıttan yeniden hesaplanır)
-    QString charges = chargeRow(I18n::t("rental_fee") + " · " + I18n::t("days").replace("{0}", QString::number(quote.days))
+    QString charges = chargeRow(I18n::t("rental_fee") + " · " + I18n::days(quote.days)
                                     + " × " + I18n::money(rental.dailyPrice),
                                 I18n::money(quote.base));
     if (quote.discount > 0)

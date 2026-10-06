@@ -48,8 +48,10 @@ void RevenueChart::paintEvent(QPaintEvent *)
         painter.drawText(QRectF(x, area.bottom() + 3, slot, labelHeight), Qt::AlignHCenter | Qt::AlignTop,
                          locale.monthName(month + 1, QLocale::ShortFormat));
         if (value > 0) {
-            // Tutar binlik kısaltmayla: 12.500 TL → 12,5K
-            const QString label = locale.toString(value / 100'000.0, 'f', 1) + "K";
+            // Tutar kısaltılır: 12.500 TL → 12,5K; 4.775.600 TL → 4,8M
+            const double lira = value / 100.0;
+            const QString label = lira >= 1'000'000 ? locale.toString(lira / 1'000'000, 'f', 1) + "M"
+                                                    : locale.toString(lira / 1'000, 'f', 1) + "K";
             painter.drawText(QRectF(x, bar.top() - labelHeight, slot, labelHeight), Qt::AlignCenter, label);
         }
     }

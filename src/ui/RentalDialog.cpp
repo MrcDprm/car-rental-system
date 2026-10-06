@@ -262,7 +262,7 @@ void RentalDialog::updateQuote()
     const Pricing::Quote quote = Pricing::quote(it->dailyPrice, m_start->date(), m_end->date());
     QString text = it->brand + " " + it->model + "  ·  "
                    + I18n::t("price_summary")
-                         .replace("{0}", I18n::t("days").replace("{0}", QString::number(quote.days)))
+                         .replace("{0}", I18n::days(quote.days))
                          .replace("{1}", I18n::money(it->dailyPrice))
                          .replace("{2}", I18n::money(quote.base));
     if (quote.discount > 0)

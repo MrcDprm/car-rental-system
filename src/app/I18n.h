@@ -25,6 +25,7 @@ QString feature(int bit);         // Feature bitinin sırası (0 = navigasyon)
 QStringList features(int flags);  // işaretli donanımların adları
 QString date(const QDate &value);
 QString money(qint64 kurus);
+QString days(int count); // "3 gün", "1 day" / "3 days"
 QString number(int value);            // 12650 → "12.650" (TR) / "12,650" (EN)
 QString phone(const QString &digits); // 5321234567 → "0532 123 45 67"
 
