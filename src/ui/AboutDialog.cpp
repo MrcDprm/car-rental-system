@@ -33,7 +33,8 @@ AboutDialog::AboutDialog(const QString &dataFolder, QWidget *parent)
     link->setAlignment(Qt::AlignCenter);
     auto *copyright = new QLabel("© 2026 Miraç Deprem", this);
     copyright->setAlignment(Qt::AlignCenter);
-    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
+    auto *buttons = new QDialogButtonBox(this);
+    buttons->addButton(I18n::t("close"), QDialogButtonBox::RejectRole);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     for (QWidget *widget : std::initializer_list<QWidget *>{icon, title, version, text, folder, link, copyright, buttons})

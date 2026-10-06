@@ -144,7 +144,7 @@ void FleetPage::editVehicle()
 void FleetPage::deleteVehicle()
 {
     const auto vehicle = VehicleRepository(m_db).find(Ui::selectedId(m_table));
-    if (!vehicle || QMessageBox::question(this, I18n::t("app_name"), I18n::t("confirm_delete")) != QMessageBox::Yes)
+    if (!vehicle || !Ui::ask(this, I18n::t("confirm_delete")))
         return;
     if (Ui::showResult(this, VehicleRepository(m_db).remove(vehicle->id))) {
         PhotoStore::remove(vehicle->photo); // silinen aracın fotoğrafı da gider
@@ -171,7 +171,7 @@ void FleetPage::exportCsv()
                                               I18n::features(v.features).join(", ")};
     const QStringList header = headers() + QStringList{I18n::t("seats"), I18n::t("luggage"), I18n::t("features")};
     if (CsvExport::write(path, header, rows, CsvExport::separatorFor(I18n::language())))
-        QMessageBox::information(this, I18n::t("app_name"), I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
+        Ui::inform(this, I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
     else
-        QMessageBox::warning(this, I18n::t("app_name"), I18n::t("csv_failed"));
+        Ui::warn(this, I18n::t("csv_failed"));
 }

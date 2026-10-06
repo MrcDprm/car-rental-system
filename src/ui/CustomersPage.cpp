@@ -100,7 +100,7 @@ void CustomersPage::editCustomer()
 void CustomersPage::deleteCustomer()
 {
     const qint64 id = Ui::selectedId(m_table);
-    if (!id || QMessageBox::question(this, I18n::t("app_name"), I18n::t("confirm_delete")) != QMessageBox::Yes)
+    if (!id || !Ui::ask(this, I18n::t("confirm_delete")))
         return;
     if (Ui::showResult(this, CustomerRepository(m_db).remove(id)))
         refresh();
@@ -117,7 +117,7 @@ void CustomersPage::exportCsv()
     for (const Customer &c : m_customers)
         rows << customerCells(c);
     if (CsvExport::write(path, headers(), rows, CsvExport::separatorFor(I18n::language())))
-        QMessageBox::information(this, I18n::t("app_name"), I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
+        Ui::inform(this, I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
     else
-        QMessageBox::warning(this, I18n::t("app_name"), I18n::t("csv_failed"));
+        Ui::warn(this, I18n::t("csv_failed"));
 }

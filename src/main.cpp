@@ -5,6 +5,7 @@
 #include "services/DemoData.h"
 #include "services/PhotoStore.h"
 #include "ui/MainWindow.h"
+#include "ui/UiHelpers.h"
 
 #include <QApplication>
 #include <QDir>
@@ -31,8 +32,8 @@ int main(int argc, char *argv[])
     Database db;
     if (!db.open(dataFolder + "/car-rental.db")) {
         // Ayrıntılı hata kullanıcıya gösterilmez; sadece ne olduğu ve dosyanın yeri söylenir
-        QMessageBox::critical(nullptr, I18n::t("app_name"),
-                              I18n::t("db_open_failed").replace("{0}", QDir::toNativeSeparators(dataFolder)));
+        Ui::message(nullptr, QMessageBox::Critical,
+                    I18n::t("db_open_failed").replace("{0}", QDir::toNativeSeparators(dataFolder)));
         return 1;
     }
     PhotoStore::setFolder(dataFolder + "/photos");
@@ -40,9 +41,8 @@ int main(int argc, char *argv[])
     // İlk açılışta veritabanı boşsa örnek filo önerilir (bir kez sorulur)
     if (!settings.demoOffered() && DemoData::isEmpty(db)) {
         settings.setDemoOffered(true);
-        if (QMessageBox::question(nullptr, I18n::t("demo_title"), I18n::t("demo_question")) == QMessageBox::Yes
-            && !DemoData::load(db))
-            QMessageBox::warning(nullptr, I18n::t("app_name"), I18n::t("demo_failed"));
+        if (Ui::ask(nullptr, I18n::t("demo_question"), true, I18n::t("demo_title")) && !DemoData::load(db))
+            Ui::warn(nullptr, I18n::t("demo_failed"));
     }
 
     MainWindow window(db, settings, dataFolder);

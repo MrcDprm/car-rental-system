@@ -47,10 +47,39 @@ inline qint64 selectedId(QTableWidget *table)
     return table->item(items.first()->row(), 0)->data(Qt::UserRole).toLongLong();
 }
 
+// Qt'nin hazır düğmeleri (Yes, No, OK) çeviri dosyası olmadan İngilizce görünür; düğmeler kendi metinlerimizle kurulur
+inline bool ask(QWidget *parent, const QString &text, bool defaultYes = false, const QString &title = QString())
+{
+    QMessageBox box(QMessageBox::Question, title.isEmpty() ? I18n::t("app_name") : title, text, QMessageBox::NoButton,
+                    parent);
+    QPushButton *yes = box.addButton(I18n::t("yes"), QMessageBox::YesRole);
+    QPushButton *no = box.addButton(I18n::t("no"), QMessageBox::NoRole);
+    box.setDefaultButton(defaultYes ? yes : no); // silme gibi işlemlerde Enter yanlışlıkla onaylamasın
+    box.exec();
+    return box.clickedButton() == yes;
+}
+
+inline void message(QWidget *parent, QMessageBox::Icon icon, const QString &text)
+{
+    QMessageBox box(icon, I18n::t("app_name"), text, QMessageBox::NoButton, parent);
+    box.addButton(I18n::t("ok"), QMessageBox::AcceptRole);
+    box.exec();
+}
+
+inline void inform(QWidget *parent, const QString &text)
+{
+    message(parent, QMessageBox::Information, text);
+}
+
+inline void warn(QWidget *parent, const QString &text)
+{
+    message(parent, QMessageBox::Warning, text);
+}
+
 inline bool showResult(QWidget *parent, const Result &result)
 {
     if (!result.ok())
-        QMessageBox::warning(parent, I18n::t("app_name"), I18n::error(result.error));
+        warn(parent, I18n::error(result.error));
     return result.ok();
 }
 
