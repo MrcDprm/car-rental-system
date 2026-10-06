@@ -2,7 +2,7 @@
 
 #include "core/Models.h"
 
-#include <QString>
+#include <QStringList>
 
 // Arayüz metinleri (Türkçe / İngilizce). Metinler anahtarla istenir: I18n::t("fleet").
 // {0}, {1}… yer tutucuları QString::arg ile doldurulur.
@@ -19,6 +19,10 @@ QString transmission(Transmission value);
 QString fuel(Fuel value);
 QString vehicleStatus(VehicleStatus value);
 QString rentalStatus(RentalStatus value);
+QString bodyType(BodyType value);
+QString color(CarColor value);
+QString feature(int bit);         // Feature bitinin sırası (0 = navigasyon)
+QStringList features(int flags);  // işaretli donanımların adları
 QString date(const QDate &value);
 QString money(qint64 kurus);
 QString number(int value);            // 12650 → "12.650" (TR) / "12,650" (EN)

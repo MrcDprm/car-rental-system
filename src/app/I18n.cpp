@@ -90,6 +90,25 @@ const QHash<QString, Text> &texts()
         {"maintenance_cost", {"Maliyet", "Cost"}},
         {"maintenance_history", {"Bakım geçmişi", "Maintenance history"}},
         {"service_warning", {"Bakım yaklaşıyor", "Service due soon"}},
+        {"body_type", {"Kasa tipi", "Body type"}},
+        {"color", {"Renk", "Colour"}},
+        {"luggage", {"Bagaj", "Luggage"}},
+        {"luggage_count", {"{0} valiz", "{0} bags"}},
+        {"seat_count", {"{0} koltuk", "{0} seats"}},
+        {"features", {"Donanım", "Equipment"}},
+        {"photo", {"Fotoğraf", "Photo"}},
+        {"choose_photo", {"Fotoğraf seç…", "Choose photo…"}},
+        {"remove_photo", {"Fotoğrafı kaldır", "Remove photo"}},
+        {"photo_hint", {"Fotoğraf yoksa kasa tipine ve renge göre çizim gösterilir.",
+                        "Without a photo, a drawing based on body type and colour is shown."}},
+        {"images", {"Görseller", "Images"}},
+        {"demo_title", {"Örnek filo", "Sample fleet"}},
+        {"demo_question", {"Veritabanı boş. Uygulamayı denemek için örnek filo yüklensin mi?\n\n"
+                           "~120 araç, 25 müşteri ve son 12 ayın kiralama geçmişi eklenir. Boş başlamak için Hayır de.",
+                           "The database is empty. Load a sample fleet to try the app?\n\n"
+                           "About 120 cars, 25 customers and 12 months of rental history are added. "
+                           "Choose No to start empty."}},
+        {"demo_failed", {"Örnek veri yüklenemedi.", "The sample data could not be loaded."}},
 
         // Müşteriler
         {"full_name", {"Ad soyad", "Full name"}},
@@ -123,6 +142,16 @@ const QHash<QString, Text> &texts()
         {"price_summary", {"{0} × {1} = {2}", "{0} × {1} = {2}"}},
         {"discount", {"İndirim %{0}", "Discount {0}%"}},
         {"pick_up_now", {"Hemen teslim et", "Pick up now"}},
+        {"per_day", {"/ gün", "/ day"}},
+        {"max_budget", {"Bütçe (günlük en fazla)", "Budget (max per day)"}},
+        {"no_limit", {"Sınırsız", "No limit"}},
+        {"min_seats", {"En az koltuk", "Min. seats"}},
+        {"min_luggage", {"En az bagaj", "Min. luggage"}},
+        {"sort", {"Sıralama", "Sort"}},
+        {"sort_cheap", {"Önce en ucuz", "Cheapest first"}},
+        {"sort_expensive", {"Önce en pahalı", "Most expensive first"}},
+        {"matching", {"{0} araç uygun", "{0} cars match"}},
+        {"choose_card", {"Listeden bir araç seç.", "Choose a car from the list."}},
         {"km_out", {"Çıkış km", "Mileage out"}},
         {"km_in", {"Dönüş km", "Mileage in"}},
         {"fuel_level", {"Yakıt seviyesi", "Fuel level"}},
@@ -163,6 +192,10 @@ const QHash<QString, Text> &texts()
         {"err_invalid_mileage", {"Km geçersiz.", "Invalid mileage."}},
         {"err_invalid_service_km", {"Sonraki bakım km'si mevcut km'den büyük olmalı.",
                                     "Next service mileage must be above the current mileage."}},
+        {"err_invalid_luggage", {"Bagaj 0 ile 9 valiz arasında olmalı.", "Luggage must be between 0 and 9 bags."}},
+        {"err_invalid_features", {"Donanım bilgisi geçersiz.", "Invalid equipment."}},
+        {"err_invalid_photo", {"Fotoğraf açılamadı. JPG ya da PNG biçiminde, en fazla 10 MB bir resim seç.",
+                               "The photo could not be opened. Choose a JPG or PNG image up to 10 MB."}},
         {"err_duplicate_plate", {"Bu plaka zaten kayıtlı.", "This plate is already registered."}},
         {"err_invalid_name", {"Ad soyad gerekli.", "Full name is required."}},
         {"err_invalid_phone", {"Telefon numarası geçersiz.", "Invalid phone number."}},
@@ -256,6 +289,45 @@ QString vehicleStatus(VehicleStatus value)
     static const Text names[] = {{"Müsait", "Available"}, {"Kirada", "Rented"}, {"Bakımda", "Maintenance"}};
     const Text &name = names[static_cast<int>(value)];
     return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString bodyType(BodyType value)
+{
+    static const Text names[] = {{"Hatchback", "Hatchback"}, {"Sedan", "Saloon"}, {"Station wagon", "Estate"},
+                                 {"SUV", "SUV"},             {"Minivan", "MPV"},  {"Coupe", "Coupé"},
+                                 {"Pikap", "Pickup"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString color(CarColor value)
+{
+    static const Text names[] = {{"Beyaz", "White"}, {"Siyah", "Black"},   {"Gri", "Grey"},     {"Gümüş", "Silver"},
+                                 {"Kırmızı", "Red"}, {"Mavi", "Blue"},     {"Yeşil", "Green"},  {"Bej", "Beige"},
+                                 {"Turuncu", "Orange"}, {"Sarı", "Yellow"}, {"Kahverengi", "Brown"}};
+    const Text &name = names[static_cast<int>(value)];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QString feature(int bit)
+{
+    static const Text names[Feature::COUNT] = {
+        {"Navigasyon", "Navigation"},     {"Geri görüş kamerası", "Rear camera"}, {"CarPlay / Android Auto", "CarPlay / Android Auto"},
+        {"Isofix (bebek koltuğu)", "Isofix (child seat)"}, {"4x4", "4x4"},         {"Sunroof", "Sunroof"},
+        {"Hız sabitleyici", "Cruise control"}, {"Isıtmalı koltuk", "Heated seats"}};
+    if (bit < 0 || bit >= Feature::COUNT)
+        return QString();
+    const Text &name = names[bit];
+    return QString::fromUtf8(g_language == "en" ? name.en : name.tr);
+}
+
+QStringList features(int flags)
+{
+    QStringList names;
+    for (int bit = 0; bit < Feature::COUNT; ++bit)
+        if (flags & (1 << bit))
+            names << feature(bit);
+    return names;
 }
 
 QString rentalStatus(RentalStatus value)
