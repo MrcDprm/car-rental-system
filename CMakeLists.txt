@@ -37,6 +37,7 @@ qt_add_executable(CarRental WIN32
     src/services/ContractPrinter.cpp
     src/services/PhotoStore.cpp
     src/ui/CarArt.cpp
+    src/ui/VehicleCard.cpp
     src/ui/MainWindow.cpp
     src/ui/DashboardPage.cpp
     src/ui/FleetPage.cpp
