@@ -45,6 +45,7 @@ QString html(const Rental &rental, const Vehicle &vehicle, const Customer &custo
 
     page += QString("<h3>%1</h3><table>").arg(escaped(t("vehicle")));
     page += row(t("plate"), vehicle.plate) + row(t("vehicle"), vehicle.brand + " " + vehicle.model)
+            + row(t("color"), I18n::color(vehicle.color))
             + row(t("start_date"), I18n::date(rental.startDate)) + row(t("end_date"), I18n::date(rental.endDate))
             + row(t("km_out"), I18n::number(rental.startKm))
             + row(t("fuel_level"), QString("%1/8").arg(rental.fuelOut));
