@@ -129,6 +129,7 @@ RentalDialog::RentalDialog(Database &db, QWidget *parent, qint64 vehicleId)
 
     // Alt kısım: fiyat, depozito, not
     m_quote = new QLabel(this);
+    m_quote->setTextFormat(Qt::PlainText); // araç adı kullanıcı verisi: "<b>" gibi bir metin biçim olarak çalışmasın
     m_quote->setStyleSheet("font-weight: 600;");
     m_deposit = new QDoubleSpinBox(this);
     m_deposit->setRange(0, 1'000'000);
@@ -234,7 +235,7 @@ void RentalDialog::applyFilters()
     for (const Vehicle &v : shown) {
         auto *item = new QListWidgetItem(m_cards);
         item->setData(VehicleCardDelegate::ID_ROLE, v.id);
-        item->setToolTip(v.brand + " " + v.model + " · " + v.plate);
+        item->setToolTip((v.brand + " " + v.model + " · " + v.plate).toHtmlEscaped()); // ipuçları HTML yorumlar
         if (v.id == previous) {
             m_cards->setCurrentItem(item);
             m_cards->scrollToItem(item);
