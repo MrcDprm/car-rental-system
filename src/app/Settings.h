@@ -13,6 +13,8 @@ public:
     void setLanguage(const QString &language);
     bool darkTheme() const;
     void setDarkTheme(bool dark);
+    bool demoOffered() const; // örnek veri bir kez sorulur
+    void setDemoOffered(bool offered);
 
 private:
     QString m_path;

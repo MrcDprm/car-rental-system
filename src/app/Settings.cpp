@@ -27,3 +27,13 @@ void Settings::setDarkTheme(bool dark)
 {
     QSettings(m_path, QSettings::IniFormat).setValue("theme", dark ? "dark" : "light");
 }
+
+bool Settings::demoOffered() const
+{
+    return QSettings(m_path, QSettings::IniFormat).value("demo_offered", false).toBool();
+}
+
+void Settings::setDemoOffered(bool offered)
+{
+    QSettings(m_path, QSettings::IniFormat).setValue("demo_offered", offered);
+}
