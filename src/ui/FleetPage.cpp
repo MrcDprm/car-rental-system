@@ -3,6 +3,8 @@
 #include "app/Theme.h"
 #include "data/VehicleRepository.h"
 #include "services/CsvExport.h"
+#include "services/PhotoStore.h"
+#include "ui/CarArt.h"
 #include "ui/MaintenanceDialog.h"
 #include "ui/UiHelpers.h"
 #include "ui/VehicleDialog.h"
@@ -18,12 +20,21 @@
 namespace {
 
 constexpr int SERVICE_WARNING_KM = 1000;
+constexpr int MILEAGE_COLUMN = 9;
+const QSize THUMBNAIL(72, 32);
+
+QStringList headers()
+{
+    return {I18n::t("plate"),     I18n::t("vehicle"),      I18n::t("year"),     I18n::t("class"),
+            I18n::t("body_type"), I18n::t("color"),        I18n::t("transmission"), I18n::t("fuel"),
+            I18n::t("daily_price"), I18n::t("mileage"),    I18n::t("status")};
+}
 
 QStringList vehicleCells(const Vehicle &v)
 {
     return {v.plate, v.brand + " " + v.model, QString::number(v.year), I18n::vehicleClass(v.vehicleClass),
-            I18n::transmission(v.transmission), I18n::fuel(v.fuel), I18n::money(v.dailyPrice),
-            I18n::number(v.mileage), I18n::vehicleStatus(v.status)};
+            I18n::bodyType(v.bodyType), I18n::color(v.color), I18n::transmission(v.transmission),
+            I18n::fuel(v.fuel), I18n::money(v.dailyPrice), I18n::number(v.mileage), I18n::vehicleStatus(v.status)};
 }
 
 } // namespace
@@ -56,9 +67,9 @@ FleetPage::FleetPage(Database &db, QWidget *parent)
         toolbar->addWidget(button);
     layout->addLayout(toolbar);
 
-    m_table = Ui::makeTable({I18n::t("plate"), I18n::t("vehicle"), I18n::t("year"), I18n::t("class"),
-                             I18n::t("transmission"), I18n::t("fuel"), I18n::t("daily_price"), I18n::t("mileage"),
-                             I18n::t("status")}, this);
+    m_table = Ui::makeTable(headers(), this);
+    m_table->setIconSize(THUMBNAIL);
+    m_table->verticalHeader()->setDefaultSectionSize(THUMBNAIL.height() + 10);
     layout->addWidget(m_table, 1);
 
     connect(m_search, &QLineEdit::textChanged, this, &FleetPage::refresh);
@@ -94,8 +105,11 @@ void FleetPage::refresh()
         else if (v.nextServiceKm - v.mileage < SERVICE_WARNING_KM)
             color = Theme::danger();
         Ui::setRow(m_table, row, cells, v.id, color);
+        m_table->item(row, 0)->setIcon(QIcon(CarArt::image(v, THUMBNAIL)));
+        // Fareyle üzerine gelince donanım listesi görünür
+        m_table->item(row, 1)->setToolTip(I18n::features(v.features).join(", "));
         if (color == Theme::danger())
-            m_table->item(row, 7)->setToolTip(I18n::t("service_warning"));
+            m_table->item(row, MILEAGE_COLUMN)->setToolTip(I18n::t("service_warning"));
     }
     m_table->resizeColumnsToContents();
     updateButtons();
@@ -129,11 +143,13 @@ void FleetPage::editVehicle()
 
 void FleetPage::deleteVehicle()
 {
-    const qint64 id = Ui::selectedId(m_table);
-    if (!id || QMessageBox::question(this, I18n::t("app_name"), I18n::t("confirm_delete")) != QMessageBox::Yes)
+    const auto vehicle = VehicleRepository(m_db).find(Ui::selectedId(m_table));
+    if (!vehicle || QMessageBox::question(this, I18n::t("app_name"), I18n::t("confirm_delete")) != QMessageBox::Yes)
         return;
-    if (Ui::showResult(this, VehicleRepository(m_db).remove(id)))
+    if (Ui::showResult(this, VehicleRepository(m_db).remove(vehicle->id))) {
+        PhotoStore::remove(vehicle->photo); // silinen aracın fotoğrafı da gider
         refresh();
+    }
 }
 
 void FleetPage::maintenance()
@@ -151,10 +167,9 @@ void FleetPage::exportCsv()
         return;
     QList<QStringList> rows;
     for (const Vehicle &v : m_vehicles)
-        rows << vehicleCells(v);
-    const QStringList header = {I18n::t("plate"), I18n::t("vehicle"), I18n::t("year"), I18n::t("class"),
-                                I18n::t("transmission"), I18n::t("fuel"), I18n::t("daily_price"),
-                                I18n::t("mileage"), I18n::t("status")};
+        rows << vehicleCells(v) + QStringList{QString::number(v.seats), QString::number(v.luggage),
+                                              I18n::features(v.features).join(", ")};
+    const QStringList header = headers() + QStringList{I18n::t("seats"), I18n::t("luggage"), I18n::t("features")};
     if (CsvExport::write(path, header, rows, CsvExport::separatorFor(I18n::language())))
         QMessageBox::information(this, I18n::t("app_name"), I18n::t("saved_csv").replace("{0}", QString::number(rows.size())));
     else
