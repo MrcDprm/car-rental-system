@@ -35,6 +35,8 @@ qt_add_executable(CarRental WIN32
     src/main.cpp
     src/app/Theme.cpp
     src/services/ContractPrinter.cpp
+    src/services/PhotoStore.cpp
+    src/ui/CarArt.cpp
     src/ui/MainWindow.cpp
     src/ui/DashboardPage.cpp
     src/ui/FleetPage.cpp
@@ -61,6 +63,6 @@ add_test(NAME test_core COMMAND test_core)
 qt_add_executable(test_data tests/test_data.cpp)
 target_link_libraries(test_data PRIVATE car_core Qt6::Test)
 add_test(NAME test_data COMMAND test_data)
-qt_add_executable(test_services tests/test_services.cpp src/services/ContractPrinter.cpp)
+qt_add_executable(test_services tests/test_services.cpp src/services/ContractPrinter.cpp src/services/PhotoStore.cpp)
 target_link_libraries(test_services PRIVATE car_core Qt6::Gui Qt6::Test)
 add_test(NAME test_services COMMAND test_services)

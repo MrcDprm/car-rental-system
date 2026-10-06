@@ -1,6 +1,11 @@
 #include "app/I18n.h"
+#include "core/Rules.h"
 #include "services/ContractPrinter.h"
 #include "services/CsvExport.h"
+#include "services/PhotoStore.h"
+
+#include <QImage>
+#include <QImageReader>
 
 #include <QFile>
 #include <QTemporaryDir>
@@ -58,9 +63,43 @@ private slots:
         QCOMPARE(I18n::number(12650), QString("12,650"));
         QCOMPARE(I18n::t("fleet"), QString("Fleet"));
         QCOMPARE(I18n::error("too_young"), QString("The customer must be at least 21."));
+        QCOMPARE(I18n::features(Feature::Navigation | Feature::Sunroof), QStringList({"Navigation", "Sunroof"}));
+        QCOMPARE(I18n::bodyType(BodyType::Station), QString("Estate"));
         QCOMPARE(I18n::error("no_such_key"), I18n::t("unexpected_error")); // bilinmeyen hata genel mesaja düşer
         I18n::setLanguage("de");
         QCOMPARE(I18n::language(), QString("tr")); // desteklenmeyen dil Türkçeye döner
+    }
+
+    void photosAreCheckedAndReEncoded()
+    {
+        QTemporaryDir dir;
+        PhotoStore::setFolder(dir.filePath("photos"));
+        QImage picture(2400, 1200, QImage::Format_RGB32);
+        picture.fill(Qt::red);
+        QVERIFY(picture.save(dir.filePath("car.png")));
+
+        const QString name = PhotoStore::importPhoto(dir.filePath("car.png"));
+        QVERIFY(Rules::isValidPhotoName(name));
+        {
+            QImageReader saved(PhotoStore::path(name)); // blok bitince dosya kapanır (Windows açık dosyayı silmez)
+            QCOMPARE(saved.format(), QByteArray("jpeg")); // PNG değil, yeniden kodlanmış JPEG
+            QCOMPARE(saved.size().width(), 1280);       // küçültüldü
+        }
+
+        // Uzantısı .jpg olan ama resim olmayan dosya reddedilir
+        QFile fake(dir.filePath("virus.jpg"));
+        QVERIFY(fake.open(QIODevice::WriteOnly));
+        fake.write("MZ this is not an image");
+        fake.close();
+        QVERIFY(PhotoStore::importPhoto(dir.filePath("virus.jpg")).isEmpty());
+        QVERIFY(PhotoStore::importPhoto(dir.filePath("missing.png")).isEmpty());
+
+        // Geçersiz ad klasör dışını gösteremez
+        QVERIFY(PhotoStore::path("../car.png").isEmpty());
+        PhotoStore::remove("../car.png");
+        QVERIFY(QFile::exists(dir.filePath("car.png")));
+        PhotoStore::remove(name);
+        QVERIFY(!QFile::exists(dir.filePath("photos/" + name)));
     }
 
     void contractEscapesHtml()
