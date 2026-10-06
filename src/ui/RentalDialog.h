@@ -12,6 +12,7 @@ class QDoubleSpinBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QPushButton;
 class QSpinBox;
 class VehicleCardDelegate;
 
@@ -23,9 +24,11 @@ class RentalDialog : public QDialog
     Q_OBJECT
 
 public:
-    RentalDialog(Database &db, QWidget *parent);
+    RentalDialog(Database &db, QWidget *parent, qint64 vehicleId = 0); // vehicleId: önceden seçili araç
 
 private:
+    void loadCustomers(qint64 select);
+    void addCustomer(); // kayıtlı olmayan müşteri pencereyi kapatmadan eklenir
     void loadVehicles(); // tarih değişince veritabanından boş araçlar
     void applyFilters(); // filtre değişince sadece liste süzülür
     qint64 selectedVehicle() const;
@@ -33,6 +36,7 @@ private:
     void save();
 
     Database &m_db;
+    qint64 m_preselect;
     QList<Vehicle> m_free;
     QComboBox *m_customer;
     QDateEdit *m_start, *m_end;
@@ -45,4 +49,5 @@ private:
     QDoubleSpinBox *m_deposit;
     QLineEdit *m_notes;
     QCheckBox *m_pickUpNow;
+    QPushButton *m_save;
 };

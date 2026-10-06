@@ -16,6 +16,7 @@ class CustomerDialog : public QDialog
 
 public:
     CustomerDialog(Database &db, const Customer &customer, QWidget *parent);
+    qint64 savedId() const { return m_customer.id; } // kaydedilen müşterinin kimliği (yeni kayıtta da dolar)
 
 private:
     void save();

@@ -6,6 +6,7 @@
 #include "data/CustomerRepository.h"
 #include "data/RentalRepository.h"
 #include "data/VehicleRepository.h"
+#include "ui/CustomerDialog.h"
 #include "ui/UiHelpers.h"
 #include "ui/VehicleCard.h"
 
@@ -64,22 +65,26 @@ QWidget *labeled(const QString &label, QWidget *field, QWidget *parent)
 
 } // namespace
 
-RentalDialog::RentalDialog(Database &db, QWidget *parent)
-    : QDialog(parent), m_db(db)
+RentalDialog::RentalDialog(Database &db, QWidget *parent, qint64 vehicleId)
+    : QDialog(parent), m_db(db), m_preselect(vehicleId)
 {
     setWindowTitle(I18n::t("new_rental"));
     const QDate today = QDate::currentDate();
 
     // Üst satır: müşteri ve tarihler
     m_customer = new QComboBox(this);
-    for (const Customer &c : CustomerRepository(db).all())
-        m_customer->addItem(c.fullName + "  ·  " + I18n::phone(c.phone), c.id); // görünen metin + gizli kimlik
+    auto *newCustomer = new QPushButton("+ " + I18n::t("new_customer"), this);
+    auto *customerRow = new QWidget(this);
+    auto *customerLayout = new QHBoxLayout(customerRow);
+    customerLayout->setContentsMargins(0, 0, 0, 0);
+    customerLayout->addWidget(m_customer, 1);
+    customerLayout->addWidget(newCustomer);
     m_start = dateEdit(today, this);
     m_start->setMinimumDate(today); // geçmişe rezervasyon yapılamaz
     m_end = dateEdit(today.addDays(3), this);
     m_end->setMinimumDate(today.addDays(1));
     auto *top = new QHBoxLayout;
-    top->addWidget(labeled(I18n::t("customer"), m_customer, this), 2);
+    top->addWidget(labeled(I18n::t("customer"), customerRow, this), 2);
     top->addWidget(labeled(I18n::t("start_date"), m_start, this), 1);
     top->addWidget(labeled(I18n::t("end_date"), m_end, this), 1);
 
@@ -145,8 +150,8 @@ RentalDialog::RentalDialog(Database &db, QWidget *parent)
     m_error->setWordWrap(true);
     m_error->setStyleSheet("color: " + Theme::danger().name());
     auto *buttons = new QDialogButtonBox(this);
-    auto *save = Ui::accentButton(I18n::t("save"), this);
-    buttons->addButton(save, QDialogButtonBox::AcceptRole);
+    m_save = Ui::accentButton(I18n::t("save"), this);
+    buttons->addButton(m_save, QDialogButtonBox::AcceptRole);
     buttons->addButton(I18n::t("cancel"), QDialogButtonBox::RejectRole);
 
     auto *layout = new QVBoxLayout(this);
@@ -172,13 +177,30 @@ RentalDialog::RentalDialog(Database &db, QWidget *parent)
     for (QSpinBox *box : {m_budget, m_minSeats, m_minLuggage})
         connect(box, &QSpinBox::valueChanged, this, &RentalDialog::applyFilters);
     connect(m_cards, &QListWidget::itemSelectionChanged, this, &RentalDialog::updateQuote);
+    connect(newCustomer, &QPushButton::clicked, this, &RentalDialog::addCustomer);
 
-    if (m_customer->count() == 0) {
-        m_error->setText(I18n::t("no_customers"));
-        save->setEnabled(false);
-    }
+    loadCustomers(0);
     loadVehicles();
     resize(1180, 740); // dört kart yan yana sığar
+}
+
+void RentalDialog::loadCustomers(qint64 select)
+{
+    m_customer->clear();
+    for (const Customer &c : CustomerRepository(m_db).all())
+        m_customer->addItem(c.fullName + "  ·  " + I18n::phone(c.phone), c.id); // görünen metin + gizli kimlik
+    if (select != 0)
+        m_customer->setCurrentIndex(m_customer->findData(select));
+    const bool any = m_customer->count() > 0;
+    m_save->setEnabled(any);
+    m_error->setText(any ? QString() : I18n::t("no_customers"));
+}
+
+void RentalDialog::addCustomer()
+{
+    CustomerDialog dialog(m_db, Customer{}, this);
+    if (dialog.exec() == QDialog::Accepted)
+        loadCustomers(dialog.savedId()); // yeni müşteri listeye eklenir ve seçilir
 }
 
 void RentalDialog::loadVehicles()
@@ -191,7 +213,8 @@ void RentalDialog::loadVehicles()
 
 void RentalDialog::applyFilters()
 {
-    const qint64 previous = selectedVehicle();
+    // Seçim korunur; pencere bir araçla açıldıysa ilk listede o araç seçili gelir
+    const qint64 previous = m_preselect ? std::exchange(m_preselect, 0) : selectedVehicle();
     const qint64 budget = qint64(m_budget->value()) * 100; // kuruş; 0 = sınırsız
     QList<Vehicle> shown;
     for (const Vehicle &v : m_free) {
@@ -212,8 +235,10 @@ void RentalDialog::applyFilters()
         auto *item = new QListWidgetItem(m_cards);
         item->setData(VehicleCardDelegate::ID_ROLE, v.id);
         item->setToolTip(v.brand + " " + v.model + " · " + v.plate);
-        if (v.id == previous)
-            m_cards->setCurrentItem(item); // filtre değişse de seçim korunur
+        if (v.id == previous) {
+            m_cards->setCurrentItem(item);
+            m_cards->scrollToItem(item);
+        }
     }
     m_count->setText(I18n::t("matching").replace("{0}", QString::number(shown.size())));
     updateQuote();

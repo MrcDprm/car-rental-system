@@ -41,6 +41,7 @@ CustomerDialog::CustomerDialog(Database &db, const Customer &customer, QWidget *
     m_nationalId->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,11}"), m_nationalId));
     m_license = new QLineEdit(customer.licenseNumber, this);
     m_license->setMaxLength(20);
+    m_license->setPlaceholderText(I18n::t("license_hint"));
     const QDate today = QDate::currentDate();
     m_birthDate = dateEdit(customer.birthDate, today.addYears(-30), this);
     m_licenseDate = dateEdit(customer.licenseDate, today.addYears(-5), this);
@@ -79,8 +80,10 @@ void CustomerDialog::save()
 
     CustomerRepository repo(m_db);
     const Result result = c.id ? repo.update(c) : repo.add(c);
-    if (result.ok())
-        accept();
-    else
+    if (!result.ok()) {
         m_error->setText(I18n::error(result.error));
+        return;
+    }
+    m_customer.id = result.id;
+    accept();
 }
