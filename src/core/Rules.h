@@ -19,6 +19,7 @@ bool isValidNationalId(const QString &id);
 bool isValidEmail(const QString &email);
 QString normalizePhone(const QString &text);
 bool isValidPhone(const QString &phone);
+bool isValidPhotoName(const QString &name);
 
 // Yarı açık aralıklar [başlangıç, bitiş): bir araç 10'unda dönüyorsa 10'unda yeniden kiralanabilir
 bool overlaps(const QDate &aStart, const QDate &aEnd, const QDate &bStart, const QDate &bEnd);

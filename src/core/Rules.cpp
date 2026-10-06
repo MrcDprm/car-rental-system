@@ -8,6 +8,7 @@ constexpr int MAX_TEXT = 100;
 constexpr qint64 MAX_DAILY_PRICE = 100'000'00; // 100.000 TL; daha büyüğü yazım hatasıdır
 constexpr int MAX_MILEAGE = 2'000'000;
 constexpr int MAX_RENTAL_DAYS = 365;
+constexpr int MAX_LUGGAGE = 9;
 
 int fullYears(const QDate &from, const QDate &to)
 {
@@ -79,6 +80,14 @@ bool isValidPhone(const QString &phone)
     return format.match(phone).hasMatch();
 }
 
+bool isValidPhotoName(const QString &name)
+{
+    // Uygulamanın kendi verdiği ad: 32 onaltılık karakter + .jpg. Veritabanından gelen "../../x.exe"
+    // gibi bir yol bu kalıba uymaz; böylece fotoğraf klasörünün dışındaki bir dosyaya hiç erişilmez.
+    static const QRegularExpression format("^[0-9a-f]{32}\\.jpg$");
+    return format.match(name).hasMatch();
+}
+
 bool overlaps(const QDate &aStart, const QDate &aEnd, const QDate &bStart, const QDate &bEnd)
 {
     return aStart < bEnd && bStart < aEnd;
@@ -102,6 +111,12 @@ QStringList vehicleProblems(const Vehicle &vehicle, const QDate &today)
         problems << "invalid_mileage";
     if (vehicle.nextServiceKm < 0 || vehicle.nextServiceKm > MAX_MILEAGE)
         problems << "invalid_service_km";
+    if (vehicle.luggage < 0 || vehicle.luggage > MAX_LUGGAGE)
+        problems << "invalid_luggage";
+    if ((vehicle.features & ~Feature::ALL) != 0)
+        problems << "invalid_features";
+    if (!vehicle.photo.isEmpty() && !isValidPhotoName(vehicle.photo))
+        problems << "invalid_photo";
     return problems;
 }
 

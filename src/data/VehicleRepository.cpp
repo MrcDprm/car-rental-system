@@ -7,8 +7,8 @@
 
 namespace {
 
-const QString COLUMNS = "id, plate, brand, model, year, vehicle_class, transmission, fuel, seats, "
-                        "daily_price, mileage, next_service_km, status";
+const QString COLUMNS = "id, plate, brand, model, year, vehicle_class, transmission, fuel, seats, body_type, "
+                        "color, luggage, features, photo, daily_price, mileage, next_service_km, status";
 
 // Dosyadan okunan sayı bilinmeyen bir enum değeriyse varsayılana döner (dosya elle bozulmuş olabilir)
 template <typename Enum>
@@ -28,6 +28,11 @@ void bindVehicle(QSqlQuery &query, const Vehicle &v)
     query.addBindValue(static_cast<int>(v.transmission));
     query.addBindValue(static_cast<int>(v.fuel));
     query.addBindValue(v.seats);
+    query.addBindValue(static_cast<int>(v.bodyType));
+    query.addBindValue(static_cast<int>(v.color));
+    query.addBindValue(v.luggage);
+    query.addBindValue(v.features);
+    query.addBindValue(text(v.photo));
     query.addBindValue(v.dailyPrice);
     query.addBindValue(v.mileage);
     query.addBindValue(v.nextServiceKm);
@@ -47,10 +52,15 @@ Vehicle VehicleRepository::fromQuery(const QSqlQuery &query)
     v.transmission = toEnum(query.value(6), Transmission::Automatic, Transmission::Manual);
     v.fuel = toEnum(query.value(7), Fuel::Lpg, Fuel::Petrol);
     v.seats = query.value(8).toInt();
-    v.dailyPrice = query.value(9).toLongLong();
-    v.mileage = query.value(10).toInt();
-    v.nextServiceKm = query.value(11).toInt();
-    v.status = toEnum(query.value(12), VehicleStatus::Maintenance, VehicleStatus::Available);
+    v.bodyType = toEnum(query.value(9), BodyType::Pickup, BodyType::Hatchback);
+    v.color = toEnum(query.value(10), CarColor::Brown, CarColor::White);
+    v.luggage = query.value(11).toInt();
+    v.features = query.value(12).toInt() & Feature::ALL; // bilinmeyen bitler atılır
+    v.photo = query.value(13).toString();
+    v.dailyPrice = query.value(14).toLongLong();
+    v.mileage = query.value(15).toInt();
+    v.nextServiceKm = query.value(16).toInt();
+    v.status = toEnum(query.value(17), VehicleStatus::Maintenance, VehicleStatus::Available);
     return v;
 }
 
@@ -102,7 +112,8 @@ Result VehicleRepository::add(Vehicle vehicle, const QDate &today)
 
     QSqlQuery query(m_db.connection());
     query.prepare("INSERT INTO vehicles (plate, brand, model, year, vehicle_class, transmission, fuel, seats, "
-                  "daily_price, mileage, next_service_km, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                  "body_type, color, luggage, features, photo, daily_price, mileage, next_service_km, status) "
+                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     bindVehicle(query, vehicle);
     query.addBindValue(static_cast<int>(VehicleStatus::Available));
     if (!query.exec())
@@ -120,7 +131,8 @@ Result VehicleRepository::update(Vehicle vehicle, const QDate &today)
     // Durum (müsait/kirada/bakımda) burada değişmez; onu kiralama ve bakım işlemleri yönetir
     QSqlQuery query(m_db.connection());
     query.prepare("UPDATE vehicles SET plate = ?, brand = ?, model = ?, year = ?, vehicle_class = ?, "
-                  "transmission = ?, fuel = ?, seats = ?, daily_price = ?, mileage = ?, next_service_km = ? "
+                  "transmission = ?, fuel = ?, seats = ?, body_type = ?, color = ?, luggage = ?, features = ?, "
+                  "photo = ?, daily_price = ?, mileage = ?, next_service_km = ? "
                   "WHERE id = ?");
     bindVehicle(query, vehicle);
     query.addBindValue(vehicle.id);
