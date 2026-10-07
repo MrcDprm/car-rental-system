@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  A desktop management app for a small car rental office, written in C++20 and Qt 6.<br>
+  A desktop management app for a small car rental office, written in C++ and Qt.<br>
   Fleet, customers, double-booking-free reservations, pick-up and return, maintenance, PDF contracts and revenue reports.
 </p>
 
@@ -86,8 +86,8 @@ Data is stored in `%APPDATA%\MrcDprm\CarRental` (database, car photos, settings)
 
 ## Tech Stack
 
-- **C++20**, **CMake**, **Ninja**, MinGW-w64 (MSYS2 UCRT64)
-- **Qt 6**: Widgets (UI), Sql (SQLite), Gui (QPainter drawings, PDF), Test (unit tests)
+- **C++**, **CMake**, **Ninja**, MinGW-w64 (MSYS2 UCRT64)
+- **Qt**: Widgets (UI), Sql (SQLite), Gui (QPainter drawings, PDF), Test (unit tests)
 - **SQLite**: local database
 - **windeployqt**, **Inno Setup**: Windows installer
 

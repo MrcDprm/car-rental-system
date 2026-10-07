@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Küçük bir araç kiralama ofisi için C++20 ve Qt 6 ile yazılmış masaüstü yönetim uygulaması.<br>
+  Küçük bir araç kiralama ofisi için C++ ve Qt ile yazılmış masaüstü yönetim uygulaması.<br>
   Filo, müşteriler, çakışmasız rezervasyon, teslim ve iade, bakım, PDF sözleşme ve gelir raporları.
 </p>
 
@@ -86,8 +86,8 @@ Veriler `%APPDATA%\MrcDprm\CarRental` klasöründe tutulur (veritabanı, araç f
 
 ## Kullanılan Teknolojiler
 
-- **C++20**, **CMake**, **Ninja**, MinGW-w64 (MSYS2 UCRT64)
-- **Qt 6**: Widgets (arayüz), Sql (SQLite), Gui (QPainter çizimleri, PDF), Test (birim testleri)
+- **C++**, **CMake**, **Ninja**, MinGW-w64 (MSYS2 UCRT64)
+- **Qt**: Widgets (arayüz), Sql (SQLite), Gui (QPainter çizimleri, PDF), Test (birim testleri)
 - **SQLite**: yerel veritabanı
 - **windeployqt**, **Inno Setup**: Windows kurulum dosyası
 

@@ -48,9 +48,9 @@ const QHash<QString, Text> &texts()
                             "The data file could not be opened. Make sure this folder is writable:\n{0}"}},
         {"version", {"Sürüm {0}", "Version {0}"}},
         {"about_text",
-         {"Küçük bir araç kiralama ofisi için C++20 ve Qt 6 ile yazılmış yönetim uygulaması. Veriler bu bilgisayarda "
+         {"Küçük bir araç kiralama ofisi için C++ ve Qt ile yazılmış yönetim uygulaması. Veriler bu bilgisayarda "
           "SQLite veritabanında tutulur.",
-          "A management app for a small car rental office, written in C++20 and Qt 6. Data is stored on this "
+          "A management app for a small car rental office, written in C++ and Qt. Data is stored on this "
           "computer in an SQLite database."}},
         {"data_folder", {"Veri klasörü", "Data folder"}},
         {"view_on_github", {"GitHub'da görüntüle", "View on GitHub"}},
