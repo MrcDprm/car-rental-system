@@ -143,14 +143,6 @@ ISCC installer\CarRental.iss
 - I generated a realistic sample dataset with a fixed random seed, and wrote a test that checks it: every car is valid, no rentals overlap and every car's status matches its rentals.
 - I packaged a Qt app for Windows: `windeployqt` for Qt files, a script that finds the remaining DLLs with `objdump`, and an Inno Setup installer that needs no administrator rights.
 
-## Future Plans
-
-- Staff accounts with roles (office worker, manager)
-- Several branches and moving cars between them
-- Damage photos at pick-up and return, attached to the contract
-- Online booking form connected to the same database
-- Printing directly to a printer and e-mailing the contract to the customer
-
 ## License
 
 [MIT](LICENSE)

@@ -143,14 +143,6 @@ ISCC installer\CarRental.iss
 - Sabit rastgele tohumla gerçekçi bir örnek veri seti ürettim ve bunu kontrol eden bir test yazdım: her araç geçerli, kiralamalar çakışmıyor ve her aracın durumu kiralamalarıyla tutarlı.
 - Bir Qt uygulamasını Windows için paketledim: Qt dosyaları için `windeployqt`, kalan DLL'leri `objdump` ile bulan bir betik ve yönetici izni gerektirmeyen bir Inno Setup kurulum dosyası.
 
-## Gelecek Planları
-
-- Rollere göre çalışan hesapları (ofis çalışanı, yönetici)
-- Birden fazla şube ve şubeler arası araç transferi
-- Teslim ve iadede hasar fotoğrafları, sözleşmeye eklenmiş olarak
-- Aynı veritabanına bağlı online rezervasyon formu
-- Sözleşmeyi doğrudan yazıcıya gönderme ve müşteriye e-postayla yollama
-
 ## Lisans
 
 [MIT](LICENSE)
