@@ -235,7 +235,9 @@ void RentalDialog::applyFilters()
     for (const Vehicle &v : shown) {
         auto *item = new QListWidgetItem(m_cards);
         item->setData(VehicleCardDelegate::ID_ROLE, v.id);
-        item->setToolTip((v.brand + " " + v.model + " · " + v.plate).toHtmlEscaped()); // ipuçları HTML yorumlar
+        // İpucu metni kendisi HTML mi diye tahmin eder; içinde yalnızca & olan kaçışlanmış
+        // bir ad düz metin sayılır ve &amp; olarak görünür. <qt> her zaman HTML olarak okutur.
+        item->setToolTip("<qt>" + (v.brand + " " + v.model + " · " + v.plate).toHtmlEscaped() + "</qt>");
         if (v.id == previous) {
             m_cards->setCurrentItem(item);
             m_cards->scrollToItem(item);
